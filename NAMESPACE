@@ -1,5 +1,6 @@
 export(recRearrangePipeline)
 export(runSimWithTest)
 export(Qval)
+export(getRearrCounts)
 
 importFrom('GenomicRanges','granges')
