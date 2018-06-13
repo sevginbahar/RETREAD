@@ -1,0 +1,10 @@
+Package: RETREAD
+Title: REcurrenT REArrangement Discovery
+Description: Tool for identifying recurrent rearrangements by simulating a null dataset.
+Depends: R (>= 3.1.0), GenomicRanges
+Imports: GenomicRanges
+Version: 0.2.0
+Date: 20/07/2017
+Author: Christopher Steele
+Maintainer: Christopher Steele <christopher.d.steele.1@gmail.com>
+License: GPL-3

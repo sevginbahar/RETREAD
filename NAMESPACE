@@ -1,0 +1,5 @@
+export(recRearrangePipeline)
+export(runSimWithTest)
+export(Qval)
+
+importFrom('GenomicRanges','granges')
