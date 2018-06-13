@@ -40,37 +40,6 @@ getWindows = function(windowSize=1000000,windowGap=100000,method="slide")
   return(list(windows=windows,windowsGR=windowsGranges,lims=lims))
   }
 
-# count number of chromothriptic regions overlapping genomic windows
-countChromothripsis = function(chromothripticRes,windowsGR,windowsNames)
-  {
-  print("count chromothripsis")
-  chromothriptic = do.call(rbind,sapply(chromothripticRes,FUN=function(x) do.call(rbind,x)))
-  chromothripGR = as(paste0(chromothriptic[,"chrom"],":",
-                            as.integer(chromothriptic[,"windowStarts"]),"-",
-                            as.integer(chromothriptic[,"windowEnds"])),
-                     "GRanges")
-  # chromothripsis counts in windows
-  overlaps = findOverlaps(windowsGR,chromothripGR)
-  counts = table(overlaps@from,chromothriptic[,"samp"][overlaps@to])
-  chromoSampleCounts = apply(counts,MARGIN=1,FUN=function(x) sum(x!=0))
-  chromoFullCounts = rep(0,length(windowsGR))
-  
-  chromoFullCounts[as.integer(names(chromoSampleCounts))] = chromoSampleCounts
-
-  # expected number of chromothripses per chromosome
-  combined = unique(chromothriptic[,1:2])
-  # check if chromothripsis is randomly distributed across chromosomes
-  chromoCounts = sapply(c(1:22,"X","Y"),FUN=function(x) sum(combined[,2]==x))
-  chromInfo = getChromInfo()
-  chromLengths = sapply(c(1:22,"X","Y"),FUN=function(x) abs(diff(chromInfo[,x])))
-  # goodness of fit
-  test = chisq.test(chromoCounts,p=chromLengths/sum(as.numeric(chromLengths))) # not significantly different
-  expected = sum(chromoCounts)*(chromLengths/sum(as.numeric(chromLengths)))
-  # tidy
-  rownames(counts) = windowsNames[as.numeric(rownames(counts))] 
-  return(list(chromoCounts=chromoFullCounts,expected=expected,detailedCounts=counts))
-}
-
 # function to count rearrangements in genomic windows
 countRearrangements = function(sample, # vector of samples for each rearrangement
                                chrom1, # vector of 1st partner chromosomes
@@ -157,33 +126,6 @@ plotSampleCounts=function(counts, # rearrangment counts
     text(x=x,y=y,labels=groupLabels[i],col=groupColours[i])
     }
   }
-
-# function to plot jst chromothriptic counts
-plotChromothripsisCounts=function(counts, # chromothriptic counts
-                                expected,  # expected number per chromosome
-				windowNames,
-				plotExpectedChromothriptic=TRUE
-				)
-  {
-SAVECOUNTS <<- counts
-SAVEEXPECTED <<- expected
-  print("plot chromothriptic counts")
-  # plot chromothriptic counts
-  par(mar=c(0,4,0,2))
-  plot(counts,type="l",lwd=2,col="gray37",xaxt="n",ylab="# Chromothriptic",bty="n")
-  if(plotExpectedChromothriptic)
-	{
-  	chroms = sapply(windowNames,FUN=function(x) strsplit(x,split="[:]|-")[[1]][1])
-  	for(i in 1:length(expected))
-                {
-		index = which(chroms==names(expected)[i])
-                end = max(index)
-                start=min(index)
-                lims = c(start,end)
-                lines(x=lims,y=rep(expected[i],2),lty=2)
-                }
-	} 
- }
 
 # function to plot just chromosome bar
 plotChromsomeBar=function(windows)
@@ -276,7 +218,6 @@ plotCounts = function(rearrangementCounts, # rearrangment counts
                       colourGroup, # one per interesting window, colour group
                       groupLabels, # one per group, labels
                       toPlot, # which windows to plot (above cutoff)
-                      chromothripticCounts, # chromothripsis counts
                       windows, # window labels e.g. X:1234-5678
                       dataGR, # data genomic ranges
                       windowsGR, # windows genomic ranges
@@ -289,7 +230,6 @@ plotCounts = function(rearrangementCounts, # rearrangment counts
                       cutoff=cutoff,
 		      lims = NULL,
 		      method="slide",
-			plotExpectedChromothriptic=TRUE,
                       groupColours =  c("lightblue","dodgerblue3",
                                         "lightgreen","green4",
                                         "lightpink","red2",
@@ -313,19 +253,14 @@ plotCounts = function(rearrangementCounts, # rearrangment counts
                   1,1,1,
                   1,1,1,
                   2,2,2,
-                  2,2,2,
-                  2,2,2,
                   3,3,3,
-                  4,4,4,
-                  4,4,4,
-                  4,4,4
+                  3,3,3,
+                  3,3,3
   ),byrow=TRUE))
   if(method=="slide")
 	{
 	# sliding window
 	plotSliding(rearrangeCounts=rearrangementCounts,
-		chromoCounts=chromothripticCounts$chromoCounts,
-		chromoExpected = chromothripticCounts$expected,
 		chromEnds=getPosVec(lims),
 		toPlot=toPlot,
 		dataGR=dataGR,
@@ -345,7 +280,6 @@ plotCounts = function(rearrangementCounts, # rearrangment counts
                    groupColours=groupColours, # one per group, colours
                    important=toPlot,
                    cutoff=cutoff)
-  	plotChromothripsisCounts(counts=chromothripticCounts$chromoCounts,expected=chromothripticCounts$expected,windowNames=windows,plotExpectedChromothriptic=plotExpectedChromothriptic)
 	plotChromsomeBar(windows=windows)
 	plotRearrangements(toPlot=toPlot, # string of windows within which to plot rearrangments (from toSave)
                      dataGR=dataGR, # data genomic ranges
@@ -364,12 +298,10 @@ plotCounts = function(rearrangementCounts, # rearrangment counts
 # function to run everything
 recRearrangePipeline = function(sample,chrom1,start1,end1,
                                 chrom2,start2,end2,
-                                chromothripticRes,
                                 cutoff=5,outDir=getwd(),
                                 windowSize=1000000,windowGap=100000,windowMethod="slide",
                                 colourGroup=NULL,groupLabels=NULL,
                                 cosmicGenes=NULL,
-				plotExpectedChromothriptic=TRUE,
                                 groupColours=c("lightblue","dodgerblue3",
                                                "lightgreen","green4",
                                                "lightpink","red2",
@@ -391,10 +323,6 @@ recRearrangePipeline = function(sample,chrom1,start1,end1,
                                    windowsGR=windows$windowsGR, # GRanges for chromosome windows
                                    windowsNames=windows$windows # windows names
     )
-  # count chromothipses in windows
-  chromoCounts = countChromothripsis(chromothripticRes=chromothripticRes,
-                                     windowsGR=windows$windowsGR,
-				     windowsNames=windows$windows)
   # save interesting windows
   toPlot = saveRes(sampleCounts=rearrangementCounts$sampleCounts,
 		sampleReference=rearrangementCounts$sampleReference,
@@ -426,7 +354,6 @@ recRearrangePipeline = function(sample,chrom1,start1,end1,
               colourGroup=colourGroup, # one per interesting window, colour group
               groupLabels=groupLabels, # one per group, labels
               toPlot=toPlot, # which windows to plot (above cutoff)
-              chromothripticCounts=chromoCounts, # chromothripsis counts
               windows=windows$windows, # window labels e.g. X:1234-5678
               dataGR=rearrangementCounts$dataGR, # data genomic ranges
               windowsGR=windows$windowsGR, # windows genomic ranges
@@ -439,8 +366,7 @@ recRearrangePipeline = function(sample,chrom1,start1,end1,
               cutoff=cutoff, # cutoff
 	      lims=windows$lims,
 	      method=windowMethod,
-              groupColours =  groupColours, # one per group, indicating colour
-		plotExpectedChromothriptic=plotExpectedChromothriptic
+              groupColours =  groupColours # one per group, indicating colour
       )
   toPlot = cbind(toPlot,unlist(sapply(unique(colourGroup),FUN=function(x) rep(groupLabels[x],length(which(colourGroup==x))))))
   colnames(toPlot)[ncol(toPlot)] = "group"
@@ -606,7 +532,7 @@ plotSliding = function(rearrangeCounts,chromoCounts,chromoExpected,
 			chromEnds,toPlot,
 			dataGR,colourGroup,groupLabels,groupColours,
 			chrom1,chrom2,pos1,pos2,
-			rangeExtra = 0.4,textSep = 0.25, cutoff,plotExpectedChromothriptic)
+			rangeExtra = 0.4,textSep = 0.25, cutoff)
 	{
 	par(mar=c(0,4,0,2))
 	chromLengths = vector(length=length(chromEnds))
@@ -637,21 +563,6 @@ plotSliding = function(rearrangeCounts,chromoCounts,chromoExpected,
 		y = max(as.numeric(toPlot[index,2]))+0.5
 		text(x=x,y=y,label=groupLabels[i],col=groupColours[i])
 		}
-	# plot chromothripsis counts
-	print("plot chromothriptic counts")
-	plot(NA,xlim=c(1,max(chromEnds)),ylim=c(0,max(chromoCounts)),bty="n",xlab=NA,xaxt="n",ylab="# Chromothriptic")
-	apply(info,MARGIN=2,FUN=function(vec) polygon(x=c(vec[1:2],vec[2:1]),y=c(rep(vec[4],2),0,0),col="gray37",border="gray37"))
-	if(plotExpectedChromothriptic)
-		{
-		for(i in 1:length(chromoExpected))
-                	{
-                	end = chromEnds[i]
-                	start=ifelse(i==1,1,chromEnds[i-1])
-                	lims = c(start,end)
-                	lines(x=lims,y=rep(chromoExpected[i],2),lty=2)
-                	}
-		}
-
 	# plot chromosomes
 	print("plot chromosomes")
 	plot(NA,xlim=c(1,max(chromEnds)),ylim=c(0-rangeExtra,1+rangeExtra),bty="n",yaxt="n",xaxt="n",ylab=NA,xlab=NA)
