@@ -29,9 +29,7 @@ getWindowsSlide = function(lims,windowGap,windowSize)
 getWindows = function(windowSize=1000000,windowGap=100000,method="slide")
   {
   print("get windows")
-  library(CNomplexity)
-  library(GenomicRanges)
-  lims = CNomplexity:::getChromInfo()
+  lims = getChromInfo()
   if(method=="slide")
     {
     windows = getWindowsSlide(lims,windowGap,windowSize)
@@ -63,8 +61,7 @@ countChromothripsis = function(chromothripticRes,windowsGR,windowsNames)
   combined = unique(chromothriptic[,1:2])
   # check if chromothripsis is randomly distributed across chromosomes
   chromoCounts = sapply(c(1:22,"X","Y"),FUN=function(x) sum(combined[,2]==x))
-  library(CNomplexity)
-  chromInfo = CNomplexity:::getChromInfo()
+  chromInfo = getChromInfo()
   chromLengths = sapply(c(1:22,"X","Y"),FUN=function(x) abs(diff(chromInfo[,x])))
   # goodness of fit
   test = chisq.test(chromoCounts,p=chromLengths/sum(as.numeric(chromLengths))) # not significantly different
