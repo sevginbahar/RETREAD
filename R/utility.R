@@ -4,7 +4,7 @@ loadCytoBand = function(file=NULL)
 	if(is.null(file))
 		{
 		tmpEnv = new.env()
-		data(list="cytoBand", package='CNomplexity',envir=tmpEnv)
+		data(list="cytoBand", package='RETREAD',envir=tmpEnv)
 		return(tmpEnv[["cytoBand"]])
 		} else {
 		return(readFile(file))
