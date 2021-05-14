@@ -32,9 +32,9 @@ countRearrangements = function(sample, # vector of samples for each rearrangemen
   # proportion of translocations
   dataGR1 = as(paste0(chrom1,":",start1,"-",end1),"GRanges")   
   dataGR2 = as(paste0(chrom2,":",start2,"-",end2),"GRanges")  
-  matchingProp = sapply(windowsGR,FUN=function(x)
+  matchingProp = sapply(1:length(windowsGR),FUN=function(x)
 	{
-	overlapping = unique(c(findOverlaps(dataGR1,x)@from,findOverlaps(dataGR2,x)@from))
+	overlapping = unique(c(findOverlaps(dataGR1,windowsGR[x])@from,findOverlaps(dataGR2,windowsGR[x])@from))
 	matching = chrom1[overlapping]!=chrom1[overlapping]
 	sum(matching)/length(matching)
 	})
