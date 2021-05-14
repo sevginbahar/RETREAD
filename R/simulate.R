@@ -14,8 +14,7 @@ setupSims = function(sample,chrom1,chrom2,pos1,pos2)
 	pos = sapply(unique(chrom1[sameChrom]),FUN=function(x) sameChrom[which(chrom1[sameChrom]==x)],simplify=FALSE)
 	meanDists = sapply(pos,FUN=function(x) mean(abs(pos2[x]-pos1[x])))
 	# chromosome lengths
-	library(CNomplexity)
-	lims = CNomplexity:::getChromInfo()
+	lims = getChromInfo()
 	chromLengths = lims[2,]-lims[1,]
 	return(list(numEvents=numEvents,
 		nSamples=length(unique(sample)),
