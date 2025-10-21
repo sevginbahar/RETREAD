@@ -266,7 +266,8 @@ autoLabel = function(toSave,cosmicGenes,doChromBand=FALSE)
 getChromBand = function(chrom,start,end)
 	{
 	library(biomaRt)
-	ensembl = useMart(biomart="ENSEMBL_MART_ENSEMBL", host="grch37.ensembl.org", path="/biomart/martservice" ,dataset="hsapiens_gene_ensembl")
+	ensembl = useEnsembl(biomart = "genes", 
+                       dataset = "hsapiens_gene_ensembl")  # This is GRCh38.p14
 	bandInfo = getBM(attributes=c("band"),
 		filters=c("chromosome_name","start","end"),
 		values=list(chromosome_name=chrom,
@@ -292,7 +293,8 @@ getOverlapGenes = function(chr,start,end)
     makeGRangesFromDataFrame
   # get Hsapiens genes
   library(Homo.sapiens)
-  genesRanges = genes(TxDb.Hsapiens.UCSC.hg19.knownGene)
+  library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+  genesRanges = genes(TxDb.Hsapiens.UCSC.hg38.knownGene)
   # overlaps between genes and DMR
   overlap = subsetByOverlaps(genesRanges,gRanges); overlap
   geneStart = overlap@ranges@start
