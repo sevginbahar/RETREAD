@@ -10,8 +10,7 @@ plotSampleCounts=function(counts, # rearrangment counts
   print("plot rearrangement counts")
   # plot sample counts
   par(mar=c(0,4,0,2))
-  plot(counts,type="l",xaxt="n",ylab="# Rearranged",bty="n",col=
-"gray37")
+  plot(counts,type="l",xaxt="n",ylab="# Rearranged",bty="n",col="gray37", ylim=c(0, 25))
   abline(h=cutoff,lty=2)
   for(i in unique(colourGroup))
     {
