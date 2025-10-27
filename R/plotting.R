@@ -252,9 +252,9 @@ autoLabel = function(toSave,cosmicGenes,doChromBand=FALSE)
 		if(doChromBand)
 			{
 			chromBand = getChromBand(chrom=chrom,start=start,end=end)
-			paste0(chromBand,"\n[",chrom,":",start,"-",end,"Mb]")
+			return(chromBand)
 			} else {
-			paste0("[",chrom,":",start,"-",end,"Mb]")
+			return(paste0("[", chrom, ":", start_mb, "-", end_mb, "Mb]"))
 			}
 		})
 	}
@@ -265,8 +265,10 @@ autoLabel = function(toSave,cosmicGenes,doChromBand=FALSE)
 getChromBand = function(chrom,start,end)
 	{
 	library(biomaRt)
-	ensembl = useEnsembl(biomart = "genes", 
-                       dataset = "hsapiens_gene_ensembl")  # This is GRCh38.p14
+	# Use hg38/GRCh38 host instead of hg19/GRCh37
+	ensembl = useMart(biomart="ENSEMBL_MART_ENSEMBL", 
+                    host="ensembl.org",  # Current Ensembl uses GRCh38
+                    dataset="hsapiens_gene_ensembl")
 	bandInfo = getBM(attributes=c("band"),
 		filters=c("chromosome_name","start","end"),
 		values=list(chromosome_name=chrom,
@@ -290,14 +292,16 @@ getOverlapGenes = function(chr,start,end)
     dplyr::select(chrom=V1, start=V2, end=V3) %>%
     mutate(chrom=paste0('chr', chrom)) %>%
     makeGRangesFromDataFrame
-  # get Hsapiens genes
-  library(Homo.sapiens)
+	
+  # get hg38 gene annotations
   library(TxDb.Hsapiens.UCSC.hg38.knownGene)
   genesRanges = genes(TxDb.Hsapiens.UCSC.hg38.knownGene)
+	
   # overlaps between genes and DMR
   overlap = subsetByOverlaps(genesRanges,gRanges); overlap
   geneStart = overlap@ranges@start
   geneEnd = overlap@ranges@start+overlap@ranges@width
+	
   # get gene names
   library(org.Hs.eg.db)
   unmapped = org.Hs.eg.db::org.Hs.egSYMBOL
