@@ -235,40 +235,40 @@ autoLabel = function(toSave,cosmicGenes,doChromBand=FALSE)
       }
     NA
     })
- # fill in missing
-  index = which(is.na(groupLabels))
-  if(length(index)>0)
-	{
-	groupLabels[index] = sapply(index,FUN=function(x)
-		{
-		info = sapply(toSave[which(groups==x),1],FUN=function(y) strsplit(y,split="[:]|-")[[1]],simplify=FALSE)
-		BLAH <<- info
-		info = do.call(rbind,info)
-		chrom=info[1,1]
-		start=min(info[,2:3])
-		end=max(info[,2:3])
-		start = round(as.numeric(start)/1000000,1)
-		end = round(as.numeric(end)/1000000,1)
-		if(doChromBand)
-			{
-			chromBand = getChromBand(chrom=chrom,start=start,end=end)
-			return(chromBand)
-			} else {
-			return(paste0("[", chrom, ":", start_mb, "-", end_mb, "Mb]"))
-			}
-		})
+	# fill in missing labels with cytoband (hg38)
+	index = which(is.na(groupLabels))
+	if (length(index) > 0) {
+	  groupLabels[index] = sapply(index, FUN = function(x) {
+	    info = sapply(toSave[which(groups == x), 1],
+	                  FUN = function(y) strsplit(y, split = "[:]|-")[[1]],
+	                  simplify = FALSE)
+	    info = do.call(rbind, info)
+	    chrom = info[1, 1]
+	    start = min(as.numeric(info[, 2:3]))
+	    end = max(as.numeric(info[, 2:3]))
+	    
+	    # get cytoband using hg38 coordinates
+	    chromBand = getChromBand(chrom = chrom, start = start, end = end)
+	    
+	    # label with cytoband and coordinates
+	    paste0(chromBand, " [", chrom, ":", round(start / 1e6, 1), "-", round(end / 1e6, 1), "Mb]")
+	  })
 	}
+											   
   return(list(groups=groups,labels=groupLabels))
 }
 
 # function to get chromsome band
 getChromBand = function(chrom,start,end)
-	{
+{
 	library(biomaRt)
-	# Use hg38/GRCh38 host instead of hg19/GRCh37
-	ensembl = useMart(biomart="ENSEMBL_MART_ENSEMBL", 
-                    host="ensembl.org",  # Current Ensembl uses GRCh38
-                    dataset="hsapiens_gene_ensembl")
+	# Use the GRCh38 (current) Ensembl dataset (updated from hg19)
+	ensembl = useMart(
+	    biomart = "ENSEMBL_MART_ENSEMBL",
+	    host = "www.ensembl.org",
+	    dataset = "hsapiens_gene_ensembl"
+	)
+	
 	bandInfo = getBM(attributes=c("band"),
 		filters=c("chromosome_name","start","end"),
 		values=list(chromosome_name=chrom,
@@ -276,7 +276,7 @@ getChromBand = function(chrom,start,end)
 			end=end),
 		mart=ensembl)
 	return(paste0(chrom,bandInfo$band[1]))
-	}
+}
 
 # function to get genes that overlap a region
 getOverlapGenes = function(chr,start,end)
