@@ -11,8 +11,10 @@ plotSampleCounts=function(counts, # rearrangment counts
   # plot sample counts
   # 🟢 Change 1 — add top margin and allow plotting outside
   par(mar = c(0, 4, 4, 2), xpd = NA)  # ↑ increased top margin (was 0 → 4)
-	
-  plot(counts,type="l",xaxt="n",ylab="# Rearranged",bty="n",col="gray37", ylim=c(0, 25))
+
+  # y_lim limits changed
+  ylim_max <- max(counts, na.rm = TRUE) * 1.2  # 20% padding above the highest value
+  plot(counts, type = "l", xaxt = "n", ylab = "# Rearranged", bty = "n", col = "gray37", ylim = c(0, ylim_max))
   abline(h=cutoff,lty=2)
 
   # 🟢 Change 2 — adjust y offset multiplier (higher labels)
