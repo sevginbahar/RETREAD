@@ -255,7 +255,7 @@ autoLabel = function(toSave,cosmicGenes,doChromBand=FALSE)
 	    chromBand = getChromBand(chrom = chrom, start = start, end = end)
 	    
 	    # label with cytoband and coordinates
-	    paste0(chromBand, " [", chrom, ":", round(start / 1e6, 1), "-", round(end / 1e6, 1), "Mb]")
+	    paste0(chromBand)
 	  })
 	}
 											   
