@@ -200,6 +200,10 @@ autoLabel = function(toSave,cosmicGenes,doChromBand=FALSE)
   combReg = RETREAD:::combineRegions(regions=t(sapply(paste0(toSave[,1]),FUN=function(x) strsplit(x,split="[:]|-")[[1]])),
 		chromCol=1,startCol=2,endCol=3)
   combinedGR = as(paste0(combReg[,1],":",combReg[,2],"-",combReg[,3]),"GRanges")
+  # 🔧 NEW LINES ADDED: ensure both GRanges use Ensembl-style naming (1..22,X,Y)
+  suppressPackageStartupMessages(library(GenomeInfoDb))
+  seqlevelsStyle(GR) <- "Ensembl"
+  seqlevelsStyle(combinedGR) <- "Ensembl"
   # groups from combined regions
   overlaps = findOverlaps(GR,combinedGR)
   groups = overlaps@to
@@ -265,16 +269,31 @@ getChromBand = function(chrom,start,end)
 	# Use the GRCh38 (current) Ensembl dataset (updated from hg19)
 	ensembl = useMart(
 	    biomart = "ENSEMBL_MART_ENSEMBL",
-	    host = "www.ensembl.org",
+	    host = "https://www.ensembl.org",
 	    dataset = "hsapiens_gene_ensembl"
-	)
+    )
 	
-	bandInfo = getBM(attributes=c("band"),
-		filters=c("chromosome_name","start","end"),
-		values=list(chromosome_name=chrom,
-			start=start,
-			end=end),
-		mart=ensembl)
+	# ✅ Ensure chrom names are compatible with Ensembl style (no 'chr' prefix)
+    chrom <- gsub("^chr", "", chrom)
+  
+	# ✅ Limit to standard chromosomes
+	if (!chrom %in% c(as.character(1:22), "X", "Y")) {
+	    return(paste0(chrom, " (non-standard chr)"))
+	}
+	
+	# ✅ Safe call with fallback if Ensembl connection or band missing
+	bandInfo = tryCatch({
+	    getBM(
+	      attributes = c("band"),
+	      filters = c("chromosome_name", "start", "end"),
+	      values = list(chromosome_name = chrom, start = start, end = end),
+	      mart = ensembl
+	    )
+	  }, error = function(e) {
+	    warning(paste("Could not fetch cytoband for", chrom, ":", conditionMessage(e)))
+	    return(NULL)
+	})
+	
 	return(paste0(chrom,bandInfo$band[1]))
 }
 
