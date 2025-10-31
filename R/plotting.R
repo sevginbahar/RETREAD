@@ -9,9 +9,15 @@ plotSampleCounts=function(counts, # rearrangment counts
   {
   print("plot rearrangement counts")
   # plot sample counts
-  par(mar=c(0,4,0,2))
+  # 🟢 Change 1 — add top margin and allow plotting outside
+  par(mar = c(0, 4, 4, 2), xpd = NA)  # ↑ increased top margin (was 0 → 4)
+	
   plot(counts,type="l",xaxt="n",ylab="# Rearranged",bty="n",col="gray37", ylim=c(0, 25))
   abline(h=cutoff,lty=2)
+
+  # 🟢 Change 2 — adjust y offset multiplier (higher labels)
+  y_offset_factor <- 0.07  # (was 0.025)
+	
   for(i in unique(colourGroup))
     {
     index = which(colourGroup==i)
@@ -20,6 +26,11 @@ plotSampleCounts=function(counts, # rearrangment counts
     x = min(index)+max(sapply(strsplit(groupLabels[i],split="\n")[[1]],FUN=nchar))*18
     y = max(counts[index])+(diff(range(counts))*0.025)
     text(x=x,y=y,labels=groupLabels[i],col=groupColours[i])
+    }
+	
+   # 🟢 Change 3 — add safety for NA/empty labels
+    if (!is.na(groupLabels[i]) && nzchar(groupLabels[i])) {
+      text(x = x, y = y, labels = groupLabels[i], col = groupColours[i])
     }
   }
 
